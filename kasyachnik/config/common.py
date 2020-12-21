@@ -24,6 +24,7 @@ class Common(Configuration):
 
         # Your apps
         'kasyachnik.users',
+        'kasyachnik.bot',
 
     )
 
@@ -199,3 +200,6 @@ class Common(Configuration):
             'rest_framework.authentication.TokenAuthentication',
         )
     }
+
+    TELEGRAM_URL = "https://api.telegram.org/bot"
+    TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "error_token")
