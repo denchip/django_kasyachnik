@@ -15,10 +15,13 @@ class User(AbstractUser):
             return str(self.id)
 
 
-def create_user_from_weebhook(request_data=None):
-    from_id = request_data['message']['from']['id']
-    username = request_data['message']['from'].get('username', None)
-    first_name = request_data['message']['from'].get('first_name', None)
-    last_name = request_data['message']['from'].get('last_name', None)
-    User.objects.create(telegram_id=from_id, telegram_username=username, first_name=first_name,
-                        last_name=last_name)
+def get_or_create_user(message=None):
+    from_id = message['from']['id']
+    user = User.objects.filter(telegram_id=from_id).first()
+    if not user:
+        username = message['from'].get('username', None)
+        first_name = message['from'].get('first_name', "")
+        last_name = message['from'].get('last_name', "")
+        user = User.objects.create(telegram_id=from_id, telegram_username=username, first_name=first_name,
+                                   last_name=last_name, username=from_id)
+    return user
