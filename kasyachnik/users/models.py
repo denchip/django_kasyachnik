@@ -5,7 +5,7 @@ from django.contrib.auth.models import AbstractUser
 
 class User(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    telegram_id = models.UUIDField(null=True, blank=True, editable=False, db_index=True)
+    telegram_id = models.CharField(max_length=255, null=True, blank=True, editable=False, db_index=True)
     telegram_username = models.CharField(max_length=255, null=True, blank=True, db_index=True)
 
     def __str__(self):
