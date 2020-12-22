@@ -7,6 +7,9 @@ class Chat(models.Model):
     title = models.CharField(max_length=255, null=True, blank=True)
     participants = models.ManyToManyField(User, related_name='user_chats')
 
+    def __str__(self):
+        return self.title or self.id
+
 
 def get_or_create_chat(message=None):
     if message['chat']['type'] == 'private':
@@ -30,11 +33,14 @@ class Message(models.Model):
 
 def save_message(user=None, chat=None, message=None):
     message_id = message['message_id']
-    message = Message.objects.filter(telegram_id=message_id).first()
-    if not message:
-        if chat:
-            message = Message.objects.create(telegram_id=message_id, chat=chat, sender=user, text=message['text'])
-    else:
-        message.text = message['text']
-        message.save()
-    return message
+    if 'text' in message:
+        message_obj = Message.objects.filter(telegram_id=message_id).first()
+        if not message_obj:
+            if chat:
+                message_obj = Message.objects.create(telegram_id=message_id, chat=chat, sender=user, text=message['text'])
+            else:
+                message_obj = Message.objects.create(telegram_id=message_id, sender=user, text=message['text'])
+        else:
+            message_obj.text = message['text']
+            message_obj.save()
+        return message_obj
