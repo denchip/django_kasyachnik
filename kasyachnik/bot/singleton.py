@@ -68,6 +68,11 @@ class Kasyachnik:
     def _process_command(self, command=None, args_string=None):
         if not hasattr(self, 'commands_list') or command not in self.commands_list:
             self.send_message('Необработанная команда')
+        elif command == 'banek':
+            response = requests.get('https://baneks.ru/random')
+            text = response.text.split('<p>')[1].split('</p>')[0].replace('<br />', '\n').encode('ISO-8859-1').decode(
+                'utf-8')
+            self.send_message(text)
 
     def process_message(self, message=None):
         if hasattr(self, 'commands_prefix'):

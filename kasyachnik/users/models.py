@@ -7,6 +7,7 @@ class User(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     telegram_id = models.CharField(max_length=255, null=True, blank=True, editable=False, db_index=True)
     telegram_username = models.CharField(max_length=255, null=True, blank=True, db_index=True)
+    coins = models.IntegerField(default=0)
 
     def __str__(self):
         if self.telegram_username:
@@ -25,3 +26,4 @@ def get_or_create_user(message=None):
         user = User.objects.create(telegram_id=from_id, telegram_username=username, first_name=first_name,
                                    last_name=last_name, username=from_id)
     return user
+
