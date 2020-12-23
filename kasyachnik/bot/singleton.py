@@ -1,6 +1,7 @@
 from django.conf import settings
+from django.db.models import Sum
 from kasyachnik.users.models import get_or_create_user
-from kasyachnik.bot.models import get_or_create_chat, save_message
+from kasyachnik.bot.models import get_or_create_chat, save_message, Bets, BetsOption, BetsStatus, Bet
 import requests
 import json
 
@@ -12,7 +13,7 @@ class Kasyachnik:
         if not Kasyachnik.__instance:
             self.save_messages = True
             self.commands_prefix = '/'
-            self.commands_list = ['banek', 'shama']
+            self.commands_list = ['banek', 'shama', 'bet', 'betstatus']
         else:
             self.get_instance()
 
@@ -73,6 +74,53 @@ class Kasyachnik:
         #     text = response.text.split('<p>')[1].split('</p>')[0].replace('<br />', '\n').encode('ISO-8859-1').decode(
         #         'utf-8')
         #     self.send_message(text)
+        elif command == 'bet':
+            try:
+                number, amount = args_string.split()
+                number = int(number)
+                amount = int(amount)
+            except:
+                self.send_message('Некорректное значение ставки.\nИспользуйте /bet {НОМЕР} {СКОЛЬКО СТАВИТЬ}')
+                return
+
+            if self._user.coins < amount:
+                self.send_message('Браток, у тебя нет столько денег, приходи, когда станешь побогаче')
+                return
+            bets_obj = Bets.objects.filter(chat=self._chat, status=BetsStatus.OPENED.value).first()
+            if not bets_obj:
+                self.send_message('Эй, лудоман поехавший, сейчас нет активных ставок')
+                return
+            bet_option_obj = BetsOption.objects.filter(bets=bets_obj, number=number).first()
+            if not bet_option_obj:
+                self.send_message('Такого варианта нет в данной ставочке')
+                return
+            try:
+                Bet.objects.create(bettor=self._user, amount=amount, bets=bet_option_obj)
+                self._user.coins -= amount
+                self._user.save()
+                self.send_message(f'Ставочка на `{amount}` приколдезов на вариант `{bet_option_obj.title}` принята. '
+                                  f'Лол, удачи')
+            except:
+                self.send_message('Не удалось сделать ставку')
+        elif command == 'betstatus':
+            bets_obj = Bets.objects.filter(chat=self._chat, status=BetsStatus.OPENED.value).first()
+            if not bets_obj:
+                self.send_message('Эй, лудоман поехавший, сейчас нет активных ставок')
+                return
+            bet_options = BetsOption.objects.filter(bets=bets_obj).order_by('number')
+            msg = ''
+            all_bets_sum = 0
+            for bet_option in bet_options:
+                one_bet = Bet.objects.filter(bets=bet_option).aggregate(Sum('amount'))['amount__sum']
+                if one_bet:
+                    all_bets_sum += one_bet
+            for bet_option in bet_options:
+                bet_sum = Bet.objects.filter(bets=bet_option).aggregate(Sum('amount'))['amount__sum']
+                if bet_sum:
+                    rate = round(all_bets_sum / bet_sum, 2)
+                    msg += f'{bet_option.number}. `{bet_option.title}`. Залито: `{bet_sum}`. Текущий коэффициент: ' \
+                           f'`{rate}`\n'
+            self.send_message(msg)
 
     def process_message(self, message=None):
         if hasattr(self, 'commands_prefix'):
