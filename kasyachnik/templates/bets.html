@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="https://yastatic.net/jquery/3.3.1/jquery.min.js"></script>
+</head>
+<body>
+<form method="POST">
+    <label for="chats">Выбор чата:</label><br>
+    <select id="chats" name="chat">
+        {% for chat in chats %}
+            <option value="{{ chat.telegram_id }}"> {{ chat.title }}</option>
+        {% endfor %}
+    </select><br>
+    <label for="bets_name">Ставка:</label><br>
+    <input type="text" id="bets_name" name="bets_name" value=""><br>
+    <button type="button" onclick="add_bet();">Добавить вариант</button>
+    <div id="bets">
+        <div id="bet_1_div">
+            <label for="bet_1">Вариант:</label><input type="text" id="bet_1" name="bet_1">
+            <button type="button" id="bet_button_1" onclick="delete_bet(1);">-</button>
+        </div>
+        <div id="bet_2_div">
+            <label for="bet_2">Вариант:</label><input type="text" id="bet_2" name="bet_2">
+            <button type="button" id="bet_button_2" onclick="delete_bet(2);">-</button>
+        </div>
+    </div>
+    <br>
+    <input type="submit" value="Создать ставку">
+</form>
+</body>
+</html>
+<script>
+    let bets_count = 2;
+
+    function delete_bet(id) {
+        $(`#bet_${id}_div`).remove()
+        if (bets_count) bets_count--
+    }
+
+    function add_bet(id) {
+        bets_count++
+        let div = document.createElement("div")
+        div.id = `bet_${bets_count}_div`
+        let bets = document.getElementById("bets")
+        bets.appendChild(div)
+        let label = document.createElement("label")
+        label.htmlFor = `bet_${bets_count}`
+        label.textContent = `Вариант:`
+        let input = document.createElement("input")
+        input.type = "text"
+        input.id = `bet_${bets_count}`
+        input.name = `bet_${bets_count}`
+        let button = document.createElement("button")
+        button.type = "button"
+        button.id = `bet_button_${bets_count}`
+        button.onclick = function () {
+            delete_bet(`${bets_count}`)
+        }
+        button.textContent = "-"
+        div.appendChild(label)
+        div.appendChild(input)
+        div.appendChild(button)
+    }
+</script>
